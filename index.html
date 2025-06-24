@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор щкащек</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .row {
+      display: flex;
+      margin-bottom: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .prefix {
+      width: 50px;
+      font-weight: bold;
+    }
+    input {
+      padding: 8px;
+      width: 150px;
+      margin: 0 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 8px 15px;
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    .barcode-container {
+      position: relative;
+      margin-top: 10px;
+    }
+    .barcode-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .zoom-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .zoom-content {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    .close-zoom {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: white;
+      font-size: 40px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Генератор штрихкодов</h1>
+
+  <!-- Блок для ii -->
+  <div class="row">
+    <div class="prefix">ii</div>
+    <input 
+      type="text" 
+      id="ii-input" 
+      inputmode="numeric" 
+      pattern="[0-9]*" 
+      placeholder="ШК айай"
+    >
+    <button onclick="generateBarcode('ii')">Сгенерировать</button>
+  </div>
+  <div id="ii-barcode" class="barcode-container"></div>
+
+  <!-- Блок для fii -->
+  <div class="row">
+    <div class="prefix">fii</div>
+    <input 
+      type="text" 
+      id="fii-input" 
+      inputmode="numeric" 
+      pattern="[0-9]*" 
+      placeholder="Введите число"
+    >
+    <button onclick="generateBarcode('fii')">Сгенерировать</button>
+  </div>
+  <div id="fii-barcode" class="barcode-container"></div>
+
+  <!-- Блок для edm_ -->
+  <div class="row">
+    <div class="prefix">edm_</div>
+    <input 
+      type="text" 
+      id="edm-input" 
+      inputmode="numeric" 
+      pattern="[0-9]*" 
+      placeholder="Поиск?"
+    >
+    <button onclick="generateBarcode('edm_')">Сгенерировать</button>
+  </div>
+  <div id="edm-barcode" class="barcode-container"></div>
+
+  <!-- Модальное окно для увеличения -->
+  <div id="zoom-modal" class="zoom-modal">
+    <span class="close-zoom" onclick="closeZoom()">&times;</span>
+    <div id="zoom-content" class="zoom-content"></div>
+  </div>
+
+  <script>
+    // Проверка ввода (только цифры)
+    document.querySelectorAll('input[inputmode="numeric"]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+    });
+
+    function generateBarcode(prefix) {
+      const inputId = `${prefix.replace('_', '')}-input`;
+      const number = document.getElementById(inputId).value.trim();
+      
+      if (!number) {
+        alert("Введите число!");
+        return;
+      }
+
+      const barcodeText = `${prefix}${number}`;
+      const containerId = `${prefix.replace('_', '')}-barcode`;
+      const svgId = `${prefix}-barcode-svg`;
+      
+      // Очищаем контейнер и добавляем SVG
+      document.getElementById(containerId).innerHTML = `
+        <svg id="${svgId}"></svg>
+        <div class="barcode-actions">
+          <button onclick="zoomBarcode('${svgId}')">Увеличить</button>
+          <button onclick="deleteBarcode('${containerId}')">Удалить</button>
+        </div>
+      `;
+      
+      // Генерируем штрихкод
+      JsBarcode(`#${svgId}`, barcodeText, {
+        format: "CODE128",
+        displayValue: true,
+        fontSize: 16,
+        margin: 10,
+        width: 2,
+        height: 50
+      });
+    }
+
+    function deleteBarcode(containerId) {
+      document.getElementById(containerId).innerHTML = '';
+    }
+
+    function zoomBarcode(svgId) {
+      const svg = document.getElementById(svgId).cloneNode(true);
+      svg.style.width = '100%';
+      svg.style.height = 'auto';
+      
+      document.getElementById('zoom-content').innerHTML = '';
+      document.getElementById('zoom-content').appendChild(svg);
+      document.getElementById('zoom-modal').style.display = 'flex';
+    }
+
+    function closeZoom() {
+      document.getElementById('zoom-modal').style.display = 'none';
+    }
+
+    // Регистрация Service Worker для офлайн-работы
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(registration => {
+            console.log('SW registered:', registration);
+          })
+          .catch(error => {
+            console.log('SW registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
