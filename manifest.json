@@ -1,8 +1,9 @@
 {
   "name": "Генератор штрихкодов",
-  "short_name": "BarcodeGen",
+  "short_name": "Barcode",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#007AFF",
   "icons": [
@@ -17,3 +18,4 @@
       "type": "image/png"
     }
   ]
+}
